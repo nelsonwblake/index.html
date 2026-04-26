@@ -84,9 +84,9 @@
   .job.dragging { opacity: 0.4; }
   .job.drag-over { border-color: var(--color-border-info); }
   .job.done { opacity: 0.45; }
+  .job.long-press { box-shadow: 0 0 0 2px var(--color-border-info); transform: scale(1.01); transition: transform 0.15s; }
   .job-drag { color: var(--color-text-tertiary); cursor: grab; font-size: 14px; flex-shrink: 0; }
   .job-drag.disabled { opacity: 0.2; cursor: default; }
-
   .job-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: context-menu; user-select: none; }
   .job-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .badge { display: inline-flex; align-items: center; justify-content: center; font-size: 11px; padding: 6px 10px; border-radius: 20px; font-weight: 500; white-space: nowrap; cursor: pointer; min-height: 28px; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -110,7 +110,6 @@
   .due-soon { background: #FAEEDA; color: #633806; }
   .due-ok { background: #EAF3DE; color: #3B6D11; }
   .due-none { background: var(--color-background-secondary); color: var(--color-text-tertiary); }
-  .job.long-press { box-shadow: 0 0 0 2px var(--color-border-info); transform: scale(1.01); transition: transform 0.15s; }
   .trash-zone { position: fixed; bottom: 0; left: 0; right: 0; height: 90px; background: #FCEBEB; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 500; color: #A32D2D; z-index: 2000; border-top: 0.5px solid #F09595; transform: translateY(100%); transition: transform 0.2s ease; }
   .trash-zone.visible { transform: translateY(0); }
   .trash-zone.ready { background: #A32D2D; color: #ffffff; }
@@ -139,6 +138,9 @@
   .cal-day-num { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
   .cal-event { font-size: 10px; padding: 4px 6px; border-radius: 4px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; -webkit-tap-highlight-color: transparent; min-height: 22px; display: flex; align-items: center; }
   .cal-event:hover { opacity: 0.8; }
+  .cal-event.shoot-ev { background: #EEEDFE; color: #3C3489; }
+  .cal-event.delivery-ev { background: #EAF3DE; color: #3B6D11; }
+  .cal-event.delivery-ev.overdue { background: #FCEBEB; color: #A32D2D; }
   .cal-sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
   .cal-sheet { background: var(--color-background-primary); border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0; padding: 1.25rem 1.5rem 2rem; width: 100%; max-width: 480px; border-top: 0.5px solid var(--color-border-secondary); }
   .cal-sheet-handle { width: 36px; height: 4px; background: var(--color-border-secondary); border-radius: 2px; margin: 0 auto 1rem; }
@@ -148,9 +150,6 @@
   .cal-sheet-type.shoot { background: #EEEDFE; color: #3C3489; }
   .cal-sheet-type.delivery { background: #EAF3DE; color: #3B6D11; }
   .cal-sheet-type.overdue { background: #FCEBEB; color: #A32D2D; }
-  .cal-event.shoot-ev { background: #EEEDFE; color: #3C3489; }
-  .cal-event.delivery-ev { background: #EAF3DE; color: #3B6D11; }
-  .cal-event.delivery-ev.overdue { background: #FCEBEB; color: #A32D2D; }
   .ctx-menu { position: fixed; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 4px 0; z-index: 999; min-width: 160px; }
   .ctx-item { font-size: 13px; padding: 7px 14px; cursor: pointer; color: var(--color-text-primary); }
   .ctx-item:hover { background: var(--color-background-secondary); }
@@ -163,7 +162,6 @@
   .btn-save { font-size: 13px; padding: 6px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-primary); cursor: pointer; font-weight: 500; }
   .btn-save:hover { background: var(--color-background-secondary); }
   .btn-cancel-sm { font-size: 13px; padding: 6px 12px; border: none; background: none; color: var(--color-text-secondary); cursor: pointer; }
-
   .undo-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--color-text-primary); color: var(--color-background-primary); font-size: 13px; padding: 10px 16px; border-radius: 20px; display: flex; align-items: center; gap: 10px; z-index: 3000; white-space: nowrap; }
   .undo-toast button { font-size: 13px; font-weight: 500; background: none; border: none; color: #60a5fa; cursor: pointer; padding: 0; }
   .panel-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.18); display: flex; align-items: flex-end; justify-content: center; z-index: 1500; }
@@ -178,10 +176,9 @@
   .panel-job-btn { font-size: 12px; padding: 4px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-primary); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
   .panel-job-btn:hover { background: var(--color-background-secondary); }
   .panel-job-btn.danger { color: var(--color-text-danger); border-color: var(--color-border-tertiary); }
-
   .more-btn { font-size: 20px; padding: 2px 10px; border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; background: transparent; color: var(--color-text-secondary); cursor: pointer; line-height: 1; letter-spacing: 1px; }
   .more-btn:hover { background: var(--color-background-secondary); }
-  .more-menu { position: fixed; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 6px 0; z-index: 999; min-width: 160px; box-shadow: none; }
+  .more-menu { position: fixed; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 6px 0; z-index: 999; min-width: 160px; }
   .more-menu-item { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 9px 16px; cursor: pointer; color: var(--color-text-primary); -webkit-tap-highlight-color: transparent; }
   .more-menu-item:hover { background: var(--color-background-secondary); }
   .more-menu-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
@@ -193,7 +190,7 @@
   <div class="stats" id="stats"></div>
   <div class="tab-btns">
     <span class="sync-status" id="sync-status">connecting...</span>
-    <button class="tab-btn" id="refresh-btn" onclick="loadFromSheet()" title="Refresh from Google Sheets" style="padding:5px 10px;">&#8635;</button>
+    <button class="tab-btn" id="refresh-btn" onclick="loadFromSheet()" title="Refresh" style="padding:5px 10px;">&#8635;</button>
     <button class="tab-btn active" id="tab-queue" onclick="switchTab('queue')">Queue</button>
     <button class="tab-btn" id="tab-cal" onclick="switchTab('cal')">Calendar</button>
     <button class="more-btn" id="more-btn" onclick="toggleMoreMenu(event)" title="More">&#8943;</button>
@@ -246,7 +243,6 @@
 <div id="trash-zone" class="trash-zone">
   <span class="trash-icon">🗑</span><span id="trash-label">drag here to delete</span>
 </div>
-
 <div id="view-cal" style="display:none;">
   <div class="cal-header">
     <div class="cal-title" id="cal-title"></div>
@@ -279,6 +275,13 @@ let calFilters={shoot:true,delivery:true,overdue:true};
 let openMenuId=null;
 let syncTimeout=null;
 let SCRIPT_URL=localStorage.getItem('bn_script_url')||'';
+let isSaving=false;
+let trashedJobs=JSON.parse(localStorage.getItem('bn_trash')||'[]');
+let archivedJobs=JSON.parse(localStorage.getItem('bn_archive')||'[]');
+let undoJob=null,undoTimer=null;
+let lpTimer=null,lpJobId=null,lpDragging=false,lpStartY=0,lpEl=null;
+const LONG_PRESS_MS=500;
+
 function setSyncStatus(state,msg){
   const el=document.getElementById('sync-status');
   el.className='sync-status'+(state?' '+state:'');
@@ -297,7 +300,7 @@ async function loadFromSheet(){
   if(syncTimeout){ clearTimeout(syncTimeout); syncTimeout=null; await pushToSheet(); }
   while(isSaving){ await new Promise(r=>setTimeout(r,100)); }
   setSyncStatus('syncing','syncing...');
-  try {
+  try{
     const res=await fetch(SCRIPT_URL+'?action=get');
     const data=await res.json();
     if(data.jobs){
@@ -306,7 +309,7 @@ async function loadFromSheet(){
       nextId=jobs.length?Math.max(...jobs.map(j=>j.id))+1:1;
       setSyncStatus('','synced');
     }
-  } catch(e){ setSyncStatus('error','sync failed'); }
+  }catch(e){ setSyncStatus('error','sync failed'); }
   render();
 }
 function scheduleSave(){
@@ -318,41 +321,24 @@ async function pushToSheet(){
   isSaving=true;
   setSyncStatus('syncing','saving...');
   const snapshot=JSON.parse(JSON.stringify(jobs));
-  try {
+  try{
     const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save',jobs:snapshot})});
     const data=await res.json();
     if(data.ok) setSyncStatus('','saved');
     else setSyncStatus('error','save failed');
-  } catch(e){ setSyncStatus('error','save failed'); }
+  }catch(e){ setSyncStatus('error','save failed'); }
   isSaving=false;
 }
-function save(){
-  localStorage.setItem('bn_sort',sortMode);
-  scheduleSave();
-}
+function save(){ localStorage.setItem('bn_sort',sortMode); scheduleSave(); }
 function switchTab(tab){
   activeTab=tab;
-  const qv=document.getElementById('view-queue');
-  const cv=document.getElementById('view-cal');
-  if(tab==='queue'){ qv.style.display='block'; cv.style.display='none'; }
-  else { qv.style.display='none'; cv.style.display='block'; }
+  document.getElementById('view-queue').style.display=tab==='queue'?'block':'none';
+  document.getElementById('view-cal').style.display=tab==='cal'?'block':'none';
   document.getElementById('tab-queue').classList.toggle('active',tab==='queue');
   document.getElementById('tab-cal').classList.toggle('active',tab==='cal');
   if(tab==='cal') setTimeout(renderCal,50);
 }
-function getSorted(){
-  let list;
-  if(activeFilter==='all') list=[...jobs];
-  else if(activeFilter==='overdue'){
-    const now=new Date();
-    list=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<now);
-  } else list=jobs.filter(j=>j.status===activeFilter);
-  if(sortMode==='date') return list.sort((a,b)=>{ if(!a.due&&!b.due) return 0; if(!a.due) return 1; if(!b.due) return -1; return parseDate(a.due)-parseDate(b.due); });
-  if(sortMode==='shoot') return list.sort((a,b)=>{ if(!a.shoot&&!b.shoot) return 0; if(!a.shoot) return 1; if(!b.shoot) return -1; return parseDate(a.shoot)-parseDate(b.shoot); });
-  if(sortMode==='alpha') return list.sort((a,b)=>a.name.localeCompare(b.name));
-  return list;
-}
-function toKey(str){ const d=parseDate(str); if(!d) return null; return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function toKey(str){ const d=parseDate(str); if(!d) return null; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function parseDate(str){
   if(!str) return null;
   const s=String(str).trim();
@@ -360,6 +346,16 @@ function parseDate(str){
   if(iso) return new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3]));
   const d=new Date(s);
   return isNaN(d.getTime())?null:d;
+}
+function getSorted(){
+  let list;
+  if(activeFilter==='all') list=[...jobs];
+  else if(activeFilter==='overdue'){ const now=new Date(); list=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<now); }
+  else list=jobs.filter(j=>j.status===activeFilter);
+  if(sortMode==='date') return list.sort((a,b)=>{ if(!a.due&&!b.due) return 0; if(!a.due) return 1; if(!b.due) return -1; return parseDate(a.due)-parseDate(b.due); });
+  if(sortMode==='shoot') return list.sort((a,b)=>{ if(!a.shoot&&!b.shoot) return 0; if(!a.shoot) return 1; if(!b.shoot) return -1; return parseDate(a.shoot)-parseDate(b.shoot); });
+  if(sortMode==='alpha') return list.sort((a,b)=>a.name.localeCompare(b.name));
+  return list;
 }
 function shootBadge(id,shoot){
   const base=`onclick="editShoot(${id})"`;
@@ -386,7 +382,7 @@ function setFilter(f,el){
   activeFilter=f;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   if(el) el.classList.add('active');
-  else { const fb=document.getElementById('fb-'+f); if(fb) fb.classList.add('active'); }
+  else{ const fb=document.getElementById('fb-'+f); if(fb) fb.classList.add('active'); }
   renderStats(); renderList(); if(activeTab==='cal') renderCal();
 }
 function renderStats(){
@@ -424,7 +420,7 @@ function renderList(){
           ${dueBadge(j.id,j.due)}
         </div>
       </div>
-
+      ${j.status==='done'?`<button class="panel-job-btn" style="font-size:11px;padding:3px 8px;flex-shrink:0;" onclick="archiveJob(${j.id})">Archive</button>`:''}
     </div>`).join(''):`<div class="empty">No jobs here — add one above ↑</div>`;
   if(isCustom) attachDrag();
   document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
@@ -445,12 +441,8 @@ function renderCal(){
   else filteredJobs=jobs.filter(j=>j.status===activeFilter);
   const eventsByDate={};
   filteredJobs.forEach(j=>{
-    if(calFilters.shoot && j.shoot){ const k=toKey(j.shoot); if(k){ if(!eventsByDate[k]) eventsByDate[k]=[]; eventsByDate[k].push({name:j.name,type:'shoot',overdue:false}); } }
-    if(j.due&&j.status!=='done'){ const pd=parseDate(j.due); const k=toKey(j.due); if(pd&&k){
-      const overdue=pd.getTime()<now;
-      const show=(overdue&&calFilters.overdue)||(!overdue&&calFilters.delivery);
-      if(show){ if(!eventsByDate[k]) eventsByDate[k]=[]; eventsByDate[k].push({name:j.name,type:'delivery',overdue}); }
-    } }
+    if(calFilters.shoot&&j.shoot){ const k=toKey(j.shoot); if(k){ if(!eventsByDate[k]) eventsByDate[k]=[]; eventsByDate[k].push({name:j.name,type:'shoot'}); } }
+    if(j.due&&j.status!=='done'){ const pd=parseDate(j.due); const k=toKey(j.due); if(pd&&k){ const overdue=pd.getTime()<now; const show=(overdue&&calFilters.overdue)||(!overdue&&calFilters.delivery); if(show){ if(!eventsByDate[k]) eventsByDate[k]=[]; eventsByDate[k].push({name:j.name,type:'delivery',overdue}); } } }
   });
   const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
   for(let i=0;i<totalCells;i++){
@@ -467,20 +459,15 @@ function renderCal(){
   }
   grid.innerHTML=html;
   grid.onclick=function(e){
-    const el=e.target.closest('.cal-event');
-    if(!el) return;
-    e.stopPropagation();
-    closePopover();
-    const name=el.getAttribute('data-name');
-    const type=el.getAttribute('data-type');
-    const date=el.getAttribute('data-date');
+    const el=e.target.closest('.cal-event'); if(!el) return;
+    e.stopPropagation(); closePopover();
+    const name=el.getAttribute('data-name'),type=el.getAttribute('data-type'),date=el.getAttribute('data-date');
     const d=parseDate(date);
     const dateStr=d?d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):date;
     const isOverdue=el.classList.contains('overdue');
     const typeLabel=type==='shoot'?'Shoot date':(isOverdue?'Delivery — overdue':'Delivery date');
     const typeClass=type==='shoot'?'shoot':(isOverdue?'overdue':'delivery');
-    const bg=document.createElement('div');
-    bg.className='cal-sheet-bg'; bg.id='cal-sheet-bg';
+    const bg=document.createElement('div'); bg.className='cal-sheet-bg'; bg.id='cal-sheet-bg';
     bg.innerHTML='<div class="cal-sheet"><div class="cal-sheet-handle"></div><span class="cal-sheet-type '+typeClass+'">'+typeLabel+'</span><div class="cal-sheet-name">'+name+'</div><div class="cal-sheet-meta">'+dateStr+'</div></div>';
     bg.addEventListener('click',function(ev){ if(ev.target===bg) closePopover(); });
     document.body.appendChild(bg);
@@ -489,6 +476,12 @@ function renderCal(){
 function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
 function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); }
 function calToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCal(); }
+function toggleLegend(type){
+  calFilters[type]=!calFilters[type];
+  const el=document.getElementById('leg-'+type);
+  if(el){ el.classList.toggle('active',calFilters[type]); el.classList.toggle('inactive',!calFilters[type]); }
+  renderCal();
+}
 function toggleTypeMenu(e,id){
   e.stopPropagation();
   const existing=document.getElementById('ctx-menu');
@@ -551,30 +544,93 @@ function setStatus(id,status){ const j=jobs.find(x=>x.id===id); if(j){j.status=s
 function del(id){
   const j=jobs.find(x=>x.id===id); if(!j) return;
   jobs=jobs.filter(x=>x.id!==id);
-  trashedJobs.unshift({...j, deletedAt: new Date().toISOString()});
-  localStorage.setItem('bn_trash', JSON.stringify(trashedJobs));
-  save(); render();
-  showUndo(j);
+  trashedJobs.unshift({...j,deletedAt:new Date().toISOString()});
+  localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
+  save(); render(); showUndo(j);
 }
 function showUndo(j){
-  clearTimeout(undoTimer);
-  undoJob=j;
+  clearTimeout(undoTimer); undoJob=j;
   let el=document.getElementById('undo-toast');
   if(!el){ el=document.createElement('div'); el.className='undo-toast'; el.id='undo-toast'; document.body.appendChild(el); }
   el.innerHTML='"'+j.name+'" deleted <button onclick="undoDelete()">Undo</button>';
   el.style.display='flex';
-  undoTimer=setTimeout(()=>{ el.style.display='none'; undoJob=null; }, 4000);
+  undoTimer=setTimeout(()=>{ el.style.display='none'; undoJob=null; },4000);
 }
 function undoDelete(){
-  clearTimeout(undoTimer);
-  if(!undoJob) return;
+  clearTimeout(undoTimer); if(!undoJob) return;
   jobs.unshift(undoJob);
   trashedJobs=trashedJobs.filter(j=>j.id!==undoJob.id);
-  localStorage.setItem('bn_trash', JSON.stringify(trashedJobs));
+  localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
   undoJob=null;
   document.getElementById('undo-toast').style.display='none';
   save(); render();
 }
+function archiveJob(id){
+  const j=jobs.find(x=>x.id===id); if(!j) return;
+  jobs=jobs.filter(x=>x.id!==id);
+  archivedJobs.unshift({...j,archivedAt:new Date().toISOString()});
+  localStorage.setItem('bn_archive',JSON.stringify(archivedJobs));
+  save(); render(); closePanel();
+}
+function restoreFromTrash(id){
+  const j=trashedJobs.find(x=>x.id===id); if(!j) return;
+  trashedJobs=trashedJobs.filter(x=>x.id!==id);
+  localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
+  jobs.unshift(j); save(); render(); closePanel();
+}
+function permanentDelete(id){
+  trashedJobs=trashedJobs.filter(x=>x.id!==id);
+  localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
+  closePanel(); openTrash();
+}
+function restoreFromArchive(id){
+  const j=archivedJobs.find(x=>x.id===id); if(!j) return;
+  archivedJobs=archivedJobs.filter(x=>x.id!==id);
+  localStorage.setItem('bn_archive',JSON.stringify(archivedJobs));
+  jobs.unshift(j); save(); render(); closePanel();
+}
+function openTrash(){
+  closePanel();
+  const bg=document.createElement('div'); bg.className='panel-bg'; bg.id='panel-bg';
+  const items=trashedJobs.length?trashedJobs.map(j=>`
+    <div class="panel-job">
+      <div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; ${STATUS_LABELS[j.status]||j.status}</div></div>
+      <div style="display:flex;gap:6px;">
+        <button class="panel-job-btn" onclick="restoreFromTrash(${j.id})">Restore</button>
+        <button class="panel-job-btn danger" onclick="permanentDelete(${j.id})">Delete forever</button>
+      </div>
+    </div>`).join(''):'<div class="panel-empty">Trash is empty</div>';
+  bg.innerHTML=`<div class="panel"><div class="panel-handle"></div><div class="panel-title">Trash</div>${items}</div>`;
+  bg.addEventListener('click',e=>{ if(e.target===bg) closePanel(); });
+  document.body.appendChild(bg);
+}
+function openArchive(){
+  closePanel();
+  const bg=document.createElement('div'); bg.className='panel-bg'; bg.id='panel-bg';
+  const items=archivedJobs.length?archivedJobs.map(j=>`
+    <div class="panel-job">
+      <div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; archived</div></div>
+      <button class="panel-job-btn" onclick="restoreFromArchive(${j.id})">Restore</button>
+    </div>`).join(''):'<div class="panel-empty">No archived jobs yet</div>';
+  bg.innerHTML=`<div class="panel"><div class="panel-handle"></div><div class="panel-title">Archive</div>${items}</div>`;
+  bg.addEventListener('click',e=>{ if(e.target===bg) closePanel(); });
+  document.body.appendChild(bg);
+}
+function closePanel(){ const p=document.getElementById('panel-bg'); if(p) p.remove(); }
+function closePopover(){ const p=document.getElementById('cal-sheet-bg'); if(p) p.remove(); }
+function toggleMoreMenu(e){
+  e.stopPropagation();
+  const existing=document.getElementById('more-menu');
+  if(existing){ existing.remove(); return; }
+  const btn=document.getElementById('more-btn');
+  const rect=btn.getBoundingClientRect();
+  const menu=document.createElement('div'); menu.className='more-menu'; menu.id='more-menu';
+  menu.style.cssText=`right:${window.innerWidth-rect.right}px;top:${rect.bottom+6}px`;
+  menu.innerHTML=`<div class="more-menu-item" onclick="openArchive();closeMoreMenu()"><span class="more-menu-icon">&#128451;</span>Archive</div><hr class="more-menu-sep"><div class="more-menu-item" onclick="openTrash();closeMoreMenu()"><span class="more-menu-icon">&#128465;</span>Trash</div>`;
+  document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click',closeMoreMenu,{once:true}),10);
+}
+function closeMoreMenu(){ const m=document.getElementById('more-menu'); if(m) m.remove(); }
 function attachDrag(){
   document.querySelectorAll('.job').forEach(el=>{
     el.setAttribute('draggable','true');
@@ -584,121 +640,17 @@ function attachDrag(){
     el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('drag-over'); if(dragId===null||dragId===dragOverId) return; const from=jobs.findIndex(j=>j.id===dragId),to=jobs.findIndex(j=>j.id===dragOverId); if(from<0||to<0) return; const[item]=jobs.splice(from,1); jobs.splice(to,0,item); dragId=null; dragOverId=null; save(); render(); });
   });
 }
-function setSort(mode){ sortMode=mode; save(); render(); }
-function render(){ renderStats(); renderList(); if(activeTab==='cal') renderCal(); }
-
-function toggleLegend(type){
-  calFilters[type]=!calFilters[type];
-  const el=document.getElementById('leg-'+type);
-  if(el){ el.classList.toggle('active',calFilters[type]); el.classList.toggle('inactive',!calFilters[type]); }
-  renderCal();
-}
-
-
-
-function toggleMoreMenu(e){
+function handleDragHandleDown(e,id){
   e.stopPropagation();
-  const existing=document.getElementById('more-menu');
-  if(existing){ existing.remove(); return; }
-  const btn=document.getElementById('more-btn');
-  const rect=btn.getBoundingClientRect();
-  const menu=document.createElement('div');
-  menu.className='more-menu'; menu.id='more-menu';
-  menu.style.cssText=`right:${window.innerWidth-rect.right}px;top:${rect.bottom+6}px`;
-  menu.innerHTML=`
-    <div class="more-menu-item" onclick="openArchive();closeMoreMenu()">
-      <span class="more-menu-icon">&#128451;</span>Archive
-    </div>
-    <hr class="more-menu-sep">
-    <div class="more-menu-item" onclick="openTrash();closeMoreMenu()">
-      <span class="more-menu-icon">&#128465;</span>Trash
-    </div>`;
-  document.body.appendChild(menu);
-  setTimeout(()=>document.addEventListener('click',closeMoreMenu,{once:true}),10);
+  const jobEl=e.currentTarget.closest('.job'); if(!jobEl) return;
+  jobEl.setAttribute('draggable','true'); dragId=id;
 }
-function closeMoreMenu(){ const m=document.getElementById('more-menu'); if(m) m.remove(); }
-
-function archiveJob(id){
-  const j=jobs.find(x=>x.id===id); if(!j) return;
-  jobs=jobs.filter(x=>x.id!==id);
-  archivedJobs.unshift({...j, archivedAt: new Date().toISOString()});
-  localStorage.setItem('bn_archive', JSON.stringify(archivedJobs));
-  save(); render(); closePanel();
-}
-function restoreFromTrash(id){
-  const j=trashedJobs.find(x=>x.id===id); if(!j) return;
-  trashedJobs=trashedJobs.filter(x=>x.id!==id);
-  localStorage.setItem('bn_trash', JSON.stringify(trashedJobs));
-  jobs.unshift(j);
-  save(); render(); closePanel();
-}
-function permanentDelete(id){
-  trashedJobs=trashedJobs.filter(x=>x.id!==id);
-  localStorage.setItem('bn_trash', JSON.stringify(trashedJobs));
-  closePanel(); openTrash();
-}
-function restoreFromArchive(id){
-  const j=archivedJobs.find(x=>x.id===id); if(!j) return;
-  archivedJobs=archivedJobs.filter(x=>x.id!==id);
-  localStorage.setItem('bn_archive', JSON.stringify(archivedJobs));
-  jobs.unshift(j);
-  save(); render(); closePanel();
-}
-function openTrash(){
-  closePanel();
-  const bg=document.createElement('div'); bg.className='panel-bg'; bg.id='panel-bg';
-  const items=trashedJobs.length ? trashedJobs.map(j=>`
-    <div class="panel-job">
-      <div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; ${STATUS_LABELS[j.status]||j.status}</div></div>
-      <div style="display:flex;gap:6px;">
-        <button class="panel-job-btn" onclick="restoreFromTrash(${j.id})">Restore</button>
-        <button class="panel-job-btn danger" onclick="permanentDelete(${j.id})">Delete forever</button>
-      ${j.status==='done'?`<button class="panel-job-btn" style="font-size:11px;padding:3px 8px;flex-shrink:0;" onclick="archiveJob(${j.id})">Archive</button>`:''}
-    </div>`).join('') : '<div class="panel-empty">Trash is empty</div>';
-  bg.innerHTML=`<div class="panel"><div class="panel-handle"></div><div class="panel-title">Trash</div>${items}</div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closePanel(); });
-  document.body.appendChild(bg);
-}
-function openArchive(){
-  closePanel();
-  const bg=document.createElement('div'); bg.className='panel-bg'; bg.id='panel-bg';
-  const items=archivedJobs.length ? archivedJobs.map(j=>`
-    <div class="panel-job">
-      <div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; archived</div></div>
-      <button class="panel-job-btn" onclick="restoreFromArchive(${j.id})">Restore</button>
-    </div>`).join('') : '<div class="panel-empty">No archived jobs yet</div>';
-  bg.innerHTML=`<div class="panel"><div class="panel-handle"></div><div class="panel-title">Archive</div>${items}</div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closePanel(); });
-  document.body.appendChild(bg);
-}
-function closePanel(){ const p=document.getElementById('panel-bg'); if(p) p.remove(); }
-
-function closePopover() { const p = document.getElementById('cal-sheet-bg'); if (p) p.remove(); }
-
-
-let lpTimer=null, lpJobId=null, lpDragging=false, lpStartY=0, lpEl=null;
-let isSaving=false;
-let trashedJobs=JSON.parse(localStorage.getItem('bn_trash')||'[]');
-let archivedJobs=JSON.parse(localStorage.getItem('bn_archive')||'[]');
-let undoJob=null, undoTimer=null;
-const LONG_PRESS_MS=500;
-
-
-function handleDragHandleDown(e, id){
-  e.stopPropagation();
-  const jobEl = e.currentTarget.closest('.job');
-  if(!jobEl) return;
-  jobEl.setAttribute('draggable', 'true');
-  dragId = id;
-}
-
 function lpStart(e,id){
   e.stopPropagation();
   if(e.cancelable) e.preventDefault();
   if(e.touches) window.getSelection&&window.getSelection().removeAllRanges();
   const touch=e.touches?e.touches[0]:e;
-  lpStartY=touch.clientY;
-  lpJobId=id;
+  lpStartY=touch.clientY; lpJobId=id;
   lpEl=e.currentTarget.closest('.job');
   lpTimer=setTimeout(()=>{
     lpDragging=true;
@@ -734,15 +686,15 @@ function lpCancel(){
   clearTimeout(lpTimer);
   if(lpEl) lpEl.classList.remove('long-press');
   lpDragging=false; lpJobId=null; lpEl=null;
-  const tz=document.getElementById('trash-zone');
-  tz.classList.remove('visible','ready');
+  document.getElementById('trash-zone').classList.remove('visible','ready');
 }
+function setSort(mode){ sortMode=mode; save(); render(); }
+function render(){ renderStats(); renderList(); if(activeTab==='cal') renderCal(); }
 document.addEventListener('touchmove',lpMove,{passive:false});
 document.addEventListener('touchend',lpEnd);
 document.addEventListener('touchcancel',lpCancel);
 document.addEventListener('mousemove',lpMove);
 document.addEventListener('mouseup',lpEnd);
-
 document.getElementById('new-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addJob(); });
 loadFromSheet();
 </script>
