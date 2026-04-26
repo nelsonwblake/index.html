@@ -281,113 +281,83 @@ let archivedJobs=JSON.parse(localStorage.getItem('bn_archive')||'[]');
 let undoJob=null,undoTimer=null;
 let lpTimer=null,lpJobId=null,lpDragging=false,lpStartY=0,lpEl=null;
 const LONG_PRESS_MS=500;
-
-function setSyncStatus(state,msg){
-  const el=document.getElementById('sync-status');
-  el.className='sync-status'+(state?' '+state:'');
-  el.textContent=msg;
-}
-function saveScriptUrl(){
-  const val=document.getElementById('script-url-input').value.trim();
-  if(!val) return;
-  SCRIPT_URL=val;
-  localStorage.setItem('bn_script_url',val);
-  document.getElementById('setup-banner').style.display='none';
-  loadFromSheet();
-}
+function setSyncStatus(state,msg){const el=document.getElementById('sync-status');el.className='sync-status'+(state?' '+state:'');el.textContent=msg;}
+function saveScriptUrl(){const val=document.getElementById('script-url-input').value.trim();if(!val)return;SCRIPT_URL=val;localStorage.setItem('bn_script_url',val);document.getElementById('setup-banner').style.display='none';loadFromSheet();}
 async function loadFromSheet(){
-  if(!SCRIPT_URL){ document.getElementById('setup-banner').style.display='block'; setSyncStatus('error','not connected'); renderList(); return; }
-  if(syncTimeout){ clearTimeout(syncTimeout); syncTimeout=null; await pushToSheet(); }
-  while(isSaving){ await new Promise(r=>setTimeout(r,100)); }
+  if(!SCRIPT_URL){document.getElementById('setup-banner').style.display='block';setSyncStatus('error','not connected');renderList();return;}
+  if(syncTimeout){clearTimeout(syncTimeout);syncTimeout=null;await pushToSheet();}
+  while(isSaving){await new Promise(r=>setTimeout(r,100));}
   setSyncStatus('syncing','syncing...');
-  try{
-    const res=await fetch(SCRIPT_URL+'?action=get');
-    const data=await res.json();
-    if(data.jobs){
-      jobs=data.jobs.map(j=>({...j,id:Number(j.id)}));
-      jobs.forEach(j=>{ if(!('shoot' in j)) j.shoot=''; });
-      nextId=jobs.length?Math.max(...jobs.map(j=>j.id))+1:1;
-      setSyncStatus('','synced');
-    }
-  }catch(e){ setSyncStatus('error','sync failed'); }
+  try{const res=await fetch(SCRIPT_URL+'?action=get');const data=await res.json();if(data.jobs){jobs=data.jobs.map(j=>({...j,id:Number(j.id)}));jobs.forEach(j=>{if(!('shoot' in j))j.shoot='';});nextId=jobs.length?Math.max(...jobs.map(j=>j.id))+1:1;setSyncStatus('','synced');}}catch(e){setSyncStatus('error','sync failed');}
   render();
 }
-function scheduleSave(){
-  clearTimeout(syncTimeout);
-  syncTimeout=setTimeout(()=>{ syncTimeout=null; pushToSheet(); },1000);
-}
+function scheduleSave(){clearTimeout(syncTimeout);syncTimeout=setTimeout(()=>{syncTimeout=null;pushToSheet();},1000);}
 async function pushToSheet(){
-  if(!SCRIPT_URL||isSaving) return;
-  isSaving=true;
-  setSyncStatus('syncing','saving...');
+  if(!SCRIPT_URL||isSaving)return;
+  isSaving=true;setSyncStatus('syncing','saving...');
   const snapshot=JSON.parse(JSON.stringify(jobs));
-  try{
-    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save',jobs:snapshot})});
-    const data=await res.json();
-    if(data.ok) setSyncStatus('','saved');
-    else setSyncStatus('error','save failed');
-  }catch(e){ setSyncStatus('error','save failed'); }
+  try{const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save',jobs:snapshot})});const data=await res.json();if(data.ok)setSyncStatus('','saved');else setSyncStatus('error','save failed');}catch(e){setSyncStatus('error','save failed');}
   isSaving=false;
 }
-function save(){ localStorage.setItem('bn_sort',sortMode); scheduleSave(); }
+function save(){localStorage.setItem('bn_sort',sortMode);scheduleSave();}
 function switchTab(tab){
   activeTab=tab;
   document.getElementById('view-queue').style.display=tab==='queue'?'block':'none';
   document.getElementById('view-cal').style.display=tab==='cal'?'block':'none';
   document.getElementById('tab-queue').classList.toggle('active',tab==='queue');
   document.getElementById('tab-cal').classList.toggle('active',tab==='cal');
-  if(tab==='cal') setTimeout(renderCal,50);
+  if(tab==='cal')setTimeout(renderCal,50);
 }
-function toKey(str){ const d=parseDate(str); if(!d) return null; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function toKey(str){const d=parseDate(str);if(!d)return null;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function parseDate(str){
-  if(!str) return null;
+  if(!str)return null;
   const s=String(str).trim();
   const iso=s.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/);
-  if(iso) return new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3]));
+  if(iso)return new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3]));
   const d=new Date(s);
   return isNaN(d.getTime())?null:d;
 }
 function getSorted(){
   let list;
-  if(activeFilter==='all') list=[...jobs];
-  else if(activeFilter==='overdue'){ const now=new Date(); list=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<now); }
+  if(activeFilter==='all')list=[...jobs];
+  else if(activeFilter==='overdue'){const now=new Date();list=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<now);}
   else list=jobs.filter(j=>j.status===activeFilter);
-  if(sortMode==='date') return list.sort((a,b)=>{ if(!a.due&&!b.due) return 0; if(!a.due) return 1; if(!b.due) return -1; return parseDate(a.due)-parseDate(b.due); });
-  if(sortMode==='shoot') return list.sort((a,b)=>{ if(!a.shoot&&!b.shoot) return 0; if(!a.shoot) return 1; if(!b.shoot) return -1; return parseDate(a.shoot)-parseDate(b.shoot); });
-  if(sortMode==='alpha') return list.sort((a,b)=>a.name.localeCompare(b.name));
+  if(sortMode==='date')return list.sort((a,b)=>{if(!a.due&&!b.due)return 0;if(!a.due)return 1;if(!b.due)return -1;return parseDate(a.due)-parseDate(b.due);});
+  if(sortMode==='shoot')return list.sort((a,b)=>{if(!a.shoot&&!b.shoot)return 0;if(!a.shoot)return 1;if(!b.shoot)return -1;return parseDate(a.shoot)-parseDate(b.shoot);});
+  if(sortMode==='alpha')return list.sort((a,b)=>a.name.localeCompare(b.name));
   return list;
 }
 function shootBadge(id,shoot){
   const base=`onclick="editShoot(${id})"`;
-  if(!shoot) return `<span class="date-pill shoot-pill past" ${base}><span class="pill-label">shoot</span>+ add</span>`;
-  const d=parseDate(shoot); if(!d) return `<span class="date-pill shoot-pill past" ${base}><span class="pill-label">shoot</span>+ add</span>`;
-  const now=new Date(); now.setHours(0,0,0,0);
+  if(!shoot)return `<span class="date-pill shoot-pill past" ${base}><span class="pill-label">shoot</span>+ add</span>`;
+  const d=parseDate(shoot);if(!d)return `<span class="date-pill shoot-pill past" ${base}><span class="pill-label">shoot</span>+ add</span>`;
+  const now=new Date();now.setHours(0,0,0,0);
   const diff=Math.round((d-now)/86400000);
   const label=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  if(diff<0) return `<span class="date-pill shoot-pill past" ${base}><span class="pill-label">shot</span>${label}</span>`;
-  if(diff<=7) return `<span class="date-pill shoot-pill soon" ${base}><span class="pill-label">shoot</span>in ${diff}d</span>`;
+  if(diff<0)return `<span class="date-pill shoot-pill past" ${base}><span class="pill-label">shot</span>${label}</span>`;
+  if(diff<=7)return `<span class="date-pill shoot-pill soon" ${base}><span class="pill-label">shoot</span>in ${diff}d</span>`;
   return `<span class="date-pill shoot-pill" ${base}><span class="pill-label">shoot</span>${label}</span>`;
 }
 function dueBadge(id,due){
   const base=`onclick="editDue(${id})"`;
-  if(!due) return `<span class="date-pill due-none" ${base}><span class="pill-label">delivery</span>+ add</span>`;
-  const d=parseDate(due); if(!d) return `<span class="date-pill due-none" ${base}><span class="pill-label">delivery</span>+ add</span>`;
-  const now=new Date(); now.setHours(0,0,0,0);
+  if(!due)return `<span class="date-pill due-none" ${base}><span class="pill-label">delivery</span>+ add</span>`;
+  const d=parseDate(due);if(!d)return `<span class="date-pill due-none" ${base}><span class="pill-label">delivery</span>+ add</span>`;
+  const now=new Date();now.setHours(0,0,0,0);
   const diff=Math.round((d-now)/86400000);
-  if(diff<0) return `<span class="date-pill due-overdue" ${base}><span class="pill-label">delivery</span>${Math.abs(diff)}d overdue</span>`;
-  if(diff<=5) return `<span class="date-pill due-soon" ${base}><span class="pill-label">delivery</span>in ${diff}d</span>`;
+  if(diff<0)return `<span class="date-pill due-overdue" ${base}><span class="pill-label">delivery</span>${Math.abs(diff)}d overdue</span>`;
+  if(diff<=5)return `<span class="date-pill due-soon" ${base}><span class="pill-label">delivery</span>in ${diff}d</span>`;
   return `<span class="date-pill due-ok" ${base}><span class="pill-label">delivery</span>${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`;
 }
 function setFilter(f,el){
   activeFilter=f;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  if(el) el.classList.add('active');
-  else{ const fb=document.getElementById('fb-'+f); if(fb) fb.classList.add('active'); }
-  renderStats(); renderList(); if(activeTab==='cal') renderCal();
+  if(el)el.classList.add('active');
+  else{const fb=document.getElementById('fb-'+f);if(fb)fb.classList.add('active');}
+  renderStats();renderList();if(activeTab==='cal')renderCal();
 }
 function renderStats(){
   const counts={};
-  STATUSES.forEach(s=>{ counts[s]=jobs.filter(j=>j.status===s).length; });
+  STATUSES.forEach(s=>{counts[s]=jobs.filter(j=>j.status===s).length;});
   const overdue=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<new Date()).length;
   const statDefs=[
     {label:'all',filter:'all',count:jobs.length},
@@ -397,14 +367,11 @@ function renderStats(){
     {label:'ready to deliver',filter:'delivery',count:counts.delivery},
     {label:'delivered',filter:'done',count:counts.done},
   ];
-  if(overdue) statDefs.push({label:'overdue',filter:'overdue',count:overdue,danger:true});
-  document.getElementById('stats').innerHTML=statDefs.map(s=>`
-    <div class="stat ${activeFilter===s.filter?'active':''}" onclick="setFilter('${s.filter}',null)">
-      <span ${s.danger?'style="color:var(--color-text-danger)"':''}>${s.count}</span>${s.label}
-    </div>`).join('');
+  if(overdue)statDefs.push({label:'overdue',filter:'overdue',count:overdue,danger:true});
+  document.getElementById('stats').innerHTML=statDefs.map(s=>`<div class="stat ${activeFilter===s.filter?'active':''}" onclick="setFilter('${s.filter}',null)"><span ${s.danger?'style="color:var(--color-text-danger)"':''}>${s.count}</span>${s.label}</div>`).join('');
 }
 function renderList(){
-  const filtered=getSorted(); const isCustom=sortMode==='custom';
+  const filtered=getSorted();const isCustom=sortMode==='custom';
   const list=document.getElementById('job-list');
   list.innerHTML=filtered.length?filtered.map(j=>`
     <div class="job ${j.status==='done'?'done':''} status-${j.status}" data-id="${j.id}" oncontextmenu="return false">
@@ -422,9 +389,9 @@ function renderList(){
       </div>
       ${j.status==='done'?`<button class="panel-job-btn" style="font-size:11px;padding:3px 8px;flex-shrink:0;" onclick="archiveJob(${j.id})">Archive</button>`:''}
     </div>`).join(''):`<div class="empty">No jobs here — add one above ↑</div>`;
-  if(isCustom) attachDrag();
+  if(isCustom)attachDrag();
   document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
-  const sb=document.getElementById('sort-'+sortMode); if(sb) sb.classList.add('active');
+  const sb=document.getElementById('sort-'+sortMode);if(sb)sb.classList.add('active');
 }
 function renderCal(){
   const title=new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
@@ -434,23 +401,23 @@ function renderCal(){
   const firstDay=new Date(calYear,calMonth,1).getDay();
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const daysInPrev=new Date(calYear,calMonth,0).getDate();
-  const today=new Date(); today.setHours(0,0,0,0); const now=today.getTime();
+  const today=new Date();today.setHours(0,0,0,0);const now=today.getTime();
   let filteredJobs;
-  if(activeFilter==='all') filteredJobs=jobs;
-  else if(activeFilter==='overdue'){ const now2=new Date(); filteredJobs=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<now2); }
+  if(activeFilter==='all')filteredJobs=jobs;
+  else if(activeFilter==='overdue'){const now2=new Date();filteredJobs=jobs.filter(j=>j.due&&j.status!=='done'&&parseDate(j.due)<now2);}
   else filteredJobs=jobs.filter(j=>j.status===activeFilter);
   const eventsByDate={};
   filteredJobs.forEach(j=>{
-    if(calFilters.shoot&&j.shoot){ const k=toKey(j.shoot); if(k){ if(!eventsByDate[k]) eventsByDate[k]=[]; eventsByDate[k].push({name:j.name,type:'shoot'}); } }
-    if(j.due&&j.status!=='done'){ const pd=parseDate(j.due); const k=toKey(j.due); if(pd&&k){ const overdue=pd.getTime()<now; const show=(overdue&&calFilters.overdue)||(!overdue&&calFilters.delivery); if(show){ if(!eventsByDate[k]) eventsByDate[k]=[]; eventsByDate[k].push({name:j.name,type:'delivery',overdue}); } } }
+    if(calFilters.shoot&&j.shoot){const k=toKey(j.shoot);if(k){if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push({name:j.name,type:'shoot'});}}
+    if(j.due&&j.status!=='done'){const pd=parseDate(j.due);const k=toKey(j.due);if(pd&&k){const overdue=pd.getTime()<now;const show=(overdue&&calFilters.overdue)||(!overdue&&calFilters.delivery);if(show){if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push({name:j.name,type:'delivery',overdue});}}}
   });
   const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
   for(let i=0;i<totalCells;i++){
     let dayNum,month=calMonth,year=calYear,otherMonth=false;
-    if(i<firstDay){ dayNum=daysInPrev-(firstDay-1-i); month=calMonth-1; otherMonth=true; if(month<0){month=11;year=calYear-1;} }
-    else if(i>=firstDay+daysInMonth){ dayNum=i-firstDay-daysInMonth+1; month=calMonth+1; otherMonth=true; if(month>11){month=0;year=calYear+1;} }
-    else{ dayNum=i-firstDay+1; }
-    const d=new Date(year,month,dayNum); d.setHours(0,0,0,0);
+    if(i<firstDay){dayNum=daysInPrev-(firstDay-1-i);month=calMonth-1;otherMonth=true;if(month<0){month=11;year=calYear-1;}}
+    else if(i>=firstDay+daysInMonth){dayNum=i-firstDay-daysInMonth+1;month=calMonth+1;otherMonth=true;if(month>11){month=0;year=calYear+1;}}
+    else{dayNum=i-firstDay+1;}
+    const d=new Date(year,month,dayNum);d.setHours(0,0,0,0);
     const isToday=d.getTime()===now;
     const key=`${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
     const evs=eventsByDate[key]||[];
@@ -459,210 +426,194 @@ function renderCal(){
   }
   grid.innerHTML=html;
   grid.onclick=function(e){
-    const el=e.target.closest('.cal-event'); if(!el) return;
-    e.stopPropagation(); closePopover();
+    const el=e.target.closest('.cal-event');if(!el)return;
+    e.stopPropagation();closePopover();
     const name=el.getAttribute('data-name'),type=el.getAttribute('data-type'),date=el.getAttribute('data-date');
     const d=parseDate(date);
     const dateStr=d?d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):date;
     const isOverdue=el.classList.contains('overdue');
     const typeLabel=type==='shoot'?'Shoot date':(isOverdue?'Delivery — overdue':'Delivery date');
     const typeClass=type==='shoot'?'shoot':(isOverdue?'overdue':'delivery');
-    const bg=document.createElement('div'); bg.className='cal-sheet-bg'; bg.id='cal-sheet-bg';
+    const bg=document.createElement('div');bg.className='cal-sheet-bg';bg.id='cal-sheet-bg';
     bg.innerHTML='<div class="cal-sheet"><div class="cal-sheet-handle"></div><span class="cal-sheet-type '+typeClass+'">'+typeLabel+'</span><div class="cal-sheet-name">'+name+'</div><div class="cal-sheet-meta">'+dateStr+'</div></div>';
-    bg.addEventListener('click',function(ev){ if(ev.target===bg) closePopover(); });
+    bg.addEventListener('click',function(ev){if(ev.target===bg)closePopover();});
     document.body.appendChild(bg);
   };
 }
-function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
-function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); }
-function calToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCal(); }
-function toggleLegend(type){
-  calFilters[type]=!calFilters[type];
-  const el=document.getElementById('leg-'+type);
-  if(el){ el.classList.toggle('active',calFilters[type]); el.classList.toggle('inactive',!calFilters[type]); }
-  renderCal();
-}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCal();}
+function toggleLegend(type){calFilters[type]=!calFilters[type];const el=document.getElementById('leg-'+type);if(el){el.classList.toggle('active',calFilters[type]);el.classList.toggle('inactive',!calFilters[type]);}renderCal();}
 function toggleTypeMenu(e,id){
   e.stopPropagation();
   const existing=document.getElementById('ctx-menu');
-  if(existing){ const wasForSame=openMenuId===id; closeCtx(); if(wasForSame) return; }
+  if(existing){const wasForSame=openMenuId===id;closeCtx();if(wasForSame)return;}
   openMenuId=id;
-  const j=jobs.find(x=>x.id===id); if(!j) return;
+  const j=jobs.find(x=>x.id===id);if(!j)return;
   const rect=e.currentTarget.getBoundingClientRect();
-  const menu=document.createElement('div'); menu.className='ctx-menu'; menu.id='ctx-menu';
+  const menu=document.createElement('div');menu.className='ctx-menu';menu.id='ctx-menu';
   menu.style.cssText=`left:${rect.left}px;top:${rect.bottom+4}px`;
   menu.innerHTML=TYPES.map(t=>`<div class="ctx-item" onclick="setType(${id},'${t}');closeCtx()">${t}${j.type===t?' ✓':''}</div>`).join('');
   document.body.appendChild(menu);
   setTimeout(()=>document.addEventListener('click',closeCtx,{once:true}),10);
 }
-function setType(id,type){ const j=jobs.find(x=>x.id===id); if(j){j.type=type;save();render();} }
+function setType(id,type){const j=jobs.find(x=>x.id===id);if(j){j.type=type;save();render();}}
 function editShoot(id){
-  const j=jobs.find(x=>x.id===id); if(!j) return;
-  const bg=document.createElement('div'); bg.className='modal-bg'; bg.id='edit-modal';
+  const j=jobs.find(x=>x.id===id);if(!j)return;
+  const bg=document.createElement('div');bg.className='modal-bg';bg.id='edit-modal';
   bg.innerHTML=`<div class="modal"><div class="modal-title">Shoot date</div><input id="m-shoot" type="date" value="${j.shoot||''}" /><div class="modal-actions"><button class="btn-cancel-sm" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="saveShoot(${id})">Save</button></div></div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closeModal(); });
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal();});
   document.body.appendChild(bg);
-  setTimeout(()=>{ const el=document.getElementById('m-shoot'); if(el) el.focus(); },50);
+  setTimeout(()=>{const el=document.getElementById('m-shoot');if(el)el.focus();},50);
 }
-function saveShoot(id){ const j=jobs.find(x=>x.id===id); if(!j) return; j.shoot=document.getElementById('m-shoot').value; closeModal(); save(); render(); }
+function saveShoot(id){const j=jobs.find(x=>x.id===id);if(!j)return;j.shoot=document.getElementById('m-shoot').value;closeModal();save();render();}
 function editDue(id){
-  const j=jobs.find(x=>x.id===id); if(!j) return;
-  const bg=document.createElement('div'); bg.className='modal-bg'; bg.id='edit-modal';
+  const j=jobs.find(x=>x.id===id);if(!j)return;
+  const bg=document.createElement('div');bg.className='modal-bg';bg.id='edit-modal';
   bg.innerHTML=`<div class="modal"><div class="modal-title">Delivery date</div><input id="m-due" type="date" value="${j.due||''}" /><div class="modal-actions"><button class="btn-cancel-sm" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="saveDue(${id})">Save</button></div></div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closeModal(); });
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal();});
   document.body.appendChild(bg);
-  setTimeout(()=>{ const el=document.getElementById('m-due'); if(el) el.focus(); },50);
+  setTimeout(()=>{const el=document.getElementById('m-due');if(el)el.focus();},50);
 }
-function saveDue(id){ const j=jobs.find(x=>x.id===id); if(!j) return; j.due=document.getElementById('m-due').value; closeModal(); save(); render(); }
+function saveDue(id){const j=jobs.find(x=>x.id===id);if(!j)return;j.due=document.getElementById('m-due').value;closeModal();save();render();}
 function openCtx(e,id){
-  e.preventDefault(); closeCtx(); openMenuId=null;
-  const menu=document.createElement('div'); menu.className='ctx-menu'; menu.id='ctx-menu';
+  e.preventDefault();closeCtx();openMenuId=null;
+  const menu=document.createElement('div');menu.className='ctx-menu';menu.id='ctx-menu';
   menu.style.cssText=`left:${e.clientX}px;top:${e.clientY}px`;
   menu.innerHTML=`<div class="ctx-item" onclick="openEditModal(${id})">Rename job</div><hr class="ctx-sep"><div class="ctx-item" style="color:var(--color-text-danger)" onclick="del(${id});closeCtx()">Delete</div>`;
   document.body.appendChild(menu);
   setTimeout(()=>document.addEventListener('click',closeCtx,{once:true}),10);
 }
-function closeCtx(){ const m=document.getElementById('ctx-menu'); if(m) m.remove(); openMenuId=null; }
+function closeCtx(){const m=document.getElementById('ctx-menu');if(m)m.remove();openMenuId=null;}
 function openEditModal(id){
-  closeCtx(); const j=jobs.find(x=>x.id===id); if(!j) return;
-  const bg=document.createElement('div'); bg.className='modal-bg'; bg.id='edit-modal';
+  closeCtx();const j=jobs.find(x=>x.id===id);if(!j)return;
+  const bg=document.createElement('div');bg.className='modal-bg';bg.id='edit-modal';
   bg.innerHTML=`<div class="modal"><div class="modal-title">Rename job</div><input id="m-name" type="text" value="${j.name}" placeholder="Job name" /><div class="modal-actions"><button class="btn-cancel-sm" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="saveModal(${id})">Save</button></div></div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closeModal(); });
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal();});
   document.body.appendChild(bg);
-  setTimeout(()=>{ const el=document.getElementById('m-name'); if(el){el.focus();el.select();} },50);
+  setTimeout(()=>{const el=document.getElementById('m-name');if(el){el.focus();el.select();}},50);
 }
-function closeModal(){ const m=document.getElementById('edit-modal'); if(m) m.remove(); }
-function saveModal(id){ const j=jobs.find(x=>x.id===id); if(!j) return; const name=document.getElementById('m-name').value.trim(); if(!name) return; j.name=name; closeModal(); save(); render(); }
+function closeModal(){const m=document.getElementById('edit-modal');if(m)m.remove();}
+function saveModal(id){const j=jobs.find(x=>x.id===id);if(!j)return;const name=document.getElementById('m-name').value.trim();if(!name)return;j.name=name;closeModal();save();render();}
 function addJob(){
-  const name=document.getElementById('new-name').value.trim(); if(!name){document.getElementById('new-name').focus();return;}
+  const name=document.getElementById('new-name').value.trim();if(!name){document.getElementById('new-name').focus();return;}
   nextId=jobs.length?Math.max(...jobs.map(j=>j.id))+1:1;
   jobs.unshift({id:nextId++,name,type:document.getElementById('new-type').value,status:'booked',shoot:document.getElementById('new-shoot').value,due:document.getElementById('new-due').value});
-  document.getElementById('new-name').value=''; document.getElementById('new-shoot').value=''; document.getElementById('new-due').value='';
-  save(); render();
+  document.getElementById('new-name').value='';document.getElementById('new-shoot').value='';document.getElementById('new-due').value='';
+  save();render();
 }
-function setStatus(id,status){ const j=jobs.find(x=>x.id===id); if(j){j.status=status;save();render();} }
+function setStatus(id,status){const j=jobs.find(x=>x.id===id);if(j){j.status=status;save();render();}}
 function del(id){
-  const j=jobs.find(x=>x.id===id); if(!j) return;
+  const j=jobs.find(x=>x.id===id);if(!j)return;
   jobs=jobs.filter(x=>x.id!==id);
   trashedJobs.unshift({...j,deletedAt:new Date().toISOString()});
   localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
-  save(); render(); showUndo(j);
+  save();render();showUndo(j);
 }
 function showUndo(j){
-  clearTimeout(undoTimer); undoJob=j;
+  clearTimeout(undoTimer);undoJob=j;
   let el=document.getElementById('undo-toast');
-  if(!el){ el=document.createElement('div'); el.className='undo-toast'; el.id='undo-toast'; document.body.appendChild(el); }
+  if(!el){el=document.createElement('div');el.className='undo-toast';el.id='undo-toast';document.body.appendChild(el);}
   el.innerHTML='"'+j.name+'" deleted <button onclick="undoDelete()">Undo</button>';
   el.style.display='flex';
-  undoTimer=setTimeout(()=>{ el.style.display='none'; undoJob=null; },4000);
+  undoTimer=setTimeout(()=>{el.style.display='none';undoJob=null;},4000);
 }
 function undoDelete(){
-  clearTimeout(undoTimer); if(!undoJob) return;
+  clearTimeout(undoTimer);if(!undoJob)return;
   jobs.unshift(undoJob);
   trashedJobs=trashedJobs.filter(j=>j.id!==undoJob.id);
   localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
-  undoJob=null;
-  document.getElementById('undo-toast').style.display='none';
-  save(); render();
+  undoJob=null;document.getElementById('undo-toast').style.display='none';
+  save();render();
 }
 function archiveJob(id){
-  const j=jobs.find(x=>x.id===id); if(!j) return;
+  const j=jobs.find(x=>x.id===id);if(!j)return;
   jobs=jobs.filter(x=>x.id!==id);
   archivedJobs.unshift({...j,archivedAt:new Date().toISOString()});
   localStorage.setItem('bn_archive',JSON.stringify(archivedJobs));
-  save(); render(); closePanel();
+  save();render();closePanel();
 }
 function restoreFromTrash(id){
-  const j=trashedJobs.find(x=>x.id===id); if(!j) return;
+  const j=trashedJobs.find(x=>x.id===id);if(!j)return;
   trashedJobs=trashedJobs.filter(x=>x.id!==id);
   localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
-  jobs.unshift(j); save(); render(); closePanel();
+  jobs.unshift(j);save();render();closePanel();
 }
 function permanentDelete(id){
   trashedJobs=trashedJobs.filter(x=>x.id!==id);
   localStorage.setItem('bn_trash',JSON.stringify(trashedJobs));
-  closePanel(); openTrash();
+  closePanel();openTrash();
 }
 function restoreFromArchive(id){
-  const j=archivedJobs.find(x=>x.id===id); if(!j) return;
+  const j=archivedJobs.find(x=>x.id===id);if(!j)return;
   archivedJobs=archivedJobs.filter(x=>x.id!==id);
   localStorage.setItem('bn_archive',JSON.stringify(archivedJobs));
-  jobs.unshift(j); save(); render(); closePanel();
+  jobs.unshift(j);save();render();closePanel();
 }
 function openTrash(){
   closePanel();
-  const bg=document.createElement('div'); bg.className='panel-bg'; bg.id='panel-bg';
-  const items=trashedJobs.length?trashedJobs.map(j=>`
-    <div class="panel-job">
-      <div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; ${STATUS_LABELS[j.status]||j.status}</div></div>
-      <div style="display:flex;gap:6px;">
-        <button class="panel-job-btn" onclick="restoreFromTrash(${j.id})">Restore</button>
-        <button class="panel-job-btn danger" onclick="permanentDelete(${j.id})">Delete forever</button>
-      </div>
-    </div>`).join(''):'<div class="panel-empty">Trash is empty</div>';
+  const bg=document.createElement('div');bg.className='panel-bg';bg.id='panel-bg';
+  const items=trashedJobs.length?trashedJobs.map(j=>`<div class="panel-job"><div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; ${STATUS_LABELS[j.status]||j.status}</div></div><div style="display:flex;gap:6px;"><button class="panel-job-btn" onclick="restoreFromTrash(${j.id})">Restore</button><button class="panel-job-btn danger" onclick="permanentDelete(${j.id})">Delete forever</button></div></div>`).join(''):'<div class="panel-empty">Trash is empty</div>';
   bg.innerHTML=`<div class="panel"><div class="panel-handle"></div><div class="panel-title">Trash</div>${items}</div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closePanel(); });
+  bg.addEventListener('click',e=>{if(e.target===bg)closePanel();});
   document.body.appendChild(bg);
 }
 function openArchive(){
   closePanel();
-  const bg=document.createElement('div'); bg.className='panel-bg'; bg.id='panel-bg';
-  const items=archivedJobs.length?archivedJobs.map(j=>`
-    <div class="panel-job">
-      <div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; archived</div></div>
-      <button class="panel-job-btn" onclick="restoreFromArchive(${j.id})">Restore</button>
-    </div>`).join(''):'<div class="panel-empty">No archived jobs yet</div>';
+  const bg=document.createElement('div');bg.className='panel-bg';bg.id='panel-bg';
+  const items=archivedJobs.length?archivedJobs.map(j=>`<div class="panel-job"><div><div class="panel-job-name">${j.name}</div><div class="panel-job-meta">${j.type} &middot; archived</div></div><button class="panel-job-btn" onclick="restoreFromArchive(${j.id})">Restore</button></div>`).join(''):'<div class="panel-empty">No archived jobs yet</div>';
   bg.innerHTML=`<div class="panel"><div class="panel-handle"></div><div class="panel-title">Archive</div>${items}</div>`;
-  bg.addEventListener('click',e=>{ if(e.target===bg) closePanel(); });
+  bg.addEventListener('click',e=>{if(e.target===bg)closePanel();});
   document.body.appendChild(bg);
 }
-function closePanel(){ const p=document.getElementById('panel-bg'); if(p) p.remove(); }
-function closePopover(){ const p=document.getElementById('cal-sheet-bg'); if(p) p.remove(); }
+function closePanel(){const p=document.getElementById('panel-bg');if(p)p.remove();}
+function closePopover(){const p=document.getElementById('cal-sheet-bg');if(p)p.remove();}
 function toggleMoreMenu(e){
   e.stopPropagation();
   const existing=document.getElementById('more-menu');
-  if(existing){ existing.remove(); return; }
+  if(existing){existing.remove();return;}
   const btn=document.getElementById('more-btn');
   const rect=btn.getBoundingClientRect();
-  const menu=document.createElement('div'); menu.className='more-menu'; menu.id='more-menu';
+  const menu=document.createElement('div');menu.className='more-menu';menu.id='more-menu';
   menu.style.cssText=`right:${window.innerWidth-rect.right}px;top:${rect.bottom+6}px`;
   menu.innerHTML=`<div class="more-menu-item" onclick="openArchive();closeMoreMenu()"><span class="more-menu-icon">&#128451;</span>Archive</div><hr class="more-menu-sep"><div class="more-menu-item" onclick="openTrash();closeMoreMenu()"><span class="more-menu-icon">&#128465;</span>Trash</div>`;
   document.body.appendChild(menu);
   setTimeout(()=>document.addEventListener('click',closeMoreMenu,{once:true}),10);
 }
-function closeMoreMenu(){ const m=document.getElementById('more-menu'); if(m) m.remove(); }
+function closeMoreMenu(){const m=document.getElementById('more-menu');if(m)m.remove();}
 function attachDrag(){
   document.querySelectorAll('.job').forEach(el=>{
     el.setAttribute('draggable','true');
-    el.addEventListener('dragstart',e=>{ if(lpDragging){e.preventDefault();return;} dragId=parseInt(el.dataset.id); el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',dragId); });
-    el.addEventListener('dragend',()=>{ el.classList.remove('dragging'); document.querySelectorAll('.job').forEach(j=>j.classList.remove('drag-over')); });
-    el.addEventListener('dragover',e=>{ e.preventDefault(); document.querySelectorAll('.job').forEach(j=>j.classList.remove('drag-over')); el.classList.add('drag-over'); dragOverId=parseInt(el.dataset.id); });
-    el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('drag-over'); if(dragId===null||dragId===dragOverId) return; const from=jobs.findIndex(j=>j.id===dragId),to=jobs.findIndex(j=>j.id===dragOverId); if(from<0||to<0) return; const[item]=jobs.splice(from,1); jobs.splice(to,0,item); dragId=null; dragOverId=null; save(); render(); });
+    el.addEventListener('dragstart',e=>{if(lpDragging){e.preventDefault();return;}dragId=parseInt(el.dataset.id);el.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragId);});
+    el.addEventListener('dragend',()=>{el.classList.remove('dragging');document.querySelectorAll('.job').forEach(j=>j.classList.remove('drag-over'));});
+    el.addEventListener('dragover',e=>{e.preventDefault();document.querySelectorAll('.job').forEach(j=>j.classList.remove('drag-over'));el.classList.add('drag-over');dragOverId=parseInt(el.dataset.id);});
+    el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');if(dragId===null||dragId===dragOverId)return;const from=jobs.findIndex(j=>j.id===dragId),to=jobs.findIndex(j=>j.id===dragOverId);if(from<0||to<0)return;const[item]=jobs.splice(from,1);jobs.splice(to,0,item);dragId=null;dragOverId=null;save();render();});
   });
 }
 function handleDragHandleDown(e,id){
   e.stopPropagation();
-  const jobEl=e.currentTarget.closest('.job'); if(!jobEl) return;
-  jobEl.setAttribute('draggable','true'); dragId=id;
+  const jobEl=e.currentTarget.closest('.job');if(!jobEl)return;
+  jobEl.setAttribute('draggable','true');dragId=id;
 }
 function lpStart(e,id){
+  const tag=e.target.tagName.toLowerCase();
+  if(tag==='select'||tag==='input'||tag==='button'||tag==='option'||tag==='span'&&e.target.classList.contains('badge'))return;
   e.stopPropagation();
-  if(e.cancelable) e.preventDefault();
-  if(e.touches) window.getSelection&&window.getSelection().removeAllRanges();
+  if(e.touches)window.getSelection&&window.getSelection().removeAllRanges();
   const touch=e.touches?e.touches[0]:e;
-  lpStartY=touch.clientY; lpJobId=id;
+  lpStartY=touch.clientY;lpJobId=id;
   lpEl=e.currentTarget.closest('.job');
   lpTimer=setTimeout(()=>{
     lpDragging=true;
-    if(e.touches) window.getSelection&&window.getSelection().removeAllRanges();
+    if(e.touches)window.getSelection&&window.getSelection().removeAllRanges();
     lpEl.classList.add('long-press');
     document.getElementById('trash-zone').classList.add('visible');
     navigator.vibrate&&navigator.vibrate(40);
   },LONG_PRESS_MS);
 }
 function lpMove(e){
-  if(!lpDragging) return;
-  if(e.cancelable) e.preventDefault();
+  if(!lpDragging)return;
+  if(e.cancelable)e.preventDefault();
   const touch=e.touches?e.touches[0]:e;
   const tz=document.getElementById('trash-zone');
   const inZone=touch.clientY>window.innerHeight-90;
@@ -671,12 +622,12 @@ function lpMove(e){
 }
 function lpEnd(e){
   clearTimeout(lpTimer);
-  if(!lpDragging){ lpJobId=null; lpEl=null; return; }
+  if(!lpDragging){lpJobId=null;lpEl=null;return;}
   const touch=e.changedTouches?e.changedTouches[0]:e;
   const inZone=touch.clientY>window.innerHeight-90;
-  if(inZone&&lpJobId!==null) del(lpJobId);
+  if(inZone&&lpJobId!==null)del(lpJobId);
   lpDragging=false;
-  if(lpEl){ lpEl.classList.remove('long-press'); lpEl=null; }
+  if(lpEl){lpEl.classList.remove('long-press');lpEl=null;}
   const tz=document.getElementById('trash-zone');
   tz.classList.remove('visible','ready');
   document.getElementById('trash-label').textContent='drag here to delete';
@@ -684,18 +635,18 @@ function lpEnd(e){
 }
 function lpCancel(){
   clearTimeout(lpTimer);
-  if(lpEl) lpEl.classList.remove('long-press');
-  lpDragging=false; lpJobId=null; lpEl=null;
+  if(lpEl)lpEl.classList.remove('long-press');
+  lpDragging=false;lpJobId=null;lpEl=null;
   document.getElementById('trash-zone').classList.remove('visible','ready');
 }
-function setSort(mode){ sortMode=mode; save(); render(); }
-function render(){ renderStats(); renderList(); if(activeTab==='cal') renderCal(); }
+function setSort(mode){sortMode=mode;save();render();}
+function render(){renderStats();renderList();if(activeTab==='cal')renderCal();}
 document.addEventListener('touchmove',lpMove,{passive:false});
 document.addEventListener('touchend',lpEnd);
 document.addEventListener('touchcancel',lpCancel);
 document.addEventListener('mousemove',lpMove);
 document.addEventListener('mouseup',lpEnd);
-document.getElementById('new-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addJob(); });
+document.getElementById('new-name').addEventListener('keydown',e=>{if(e.key==='Enter')addJob();});
 loadFromSheet();
 </script>
 </body>
